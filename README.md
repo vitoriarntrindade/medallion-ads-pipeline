@@ -1,6 +1,7 @@
 # 📊 Ad Analytics Data Platform
 
-> Pipeline de dados end-to-end para consolidação e análise de campanhas de mídia paga — construído com as mesmas práticas usadas em plataformas de dados de escala empresarial.
+> Pipeline de dados end-to-end para consolidação e análise de campanhas de mídia paga,  construído simulando as 
+> mesmas práticas usadas em plataformas de dados de escala empresarial.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
@@ -374,8 +375,8 @@ ad_analytics_pipeline/
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/ad-analytics-pipeline.git
-cd ad-analytics-pipeline
+git clone https://github.com/vitoriarntrindade/medallion-ads-pipeline.git
+cd medallion-ads-pipelineg
 
 # Sobe todos os serviços
 docker compose up --build
