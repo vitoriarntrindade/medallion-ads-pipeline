@@ -34,6 +34,14 @@
 
 ---
 
+<p align="center">
+  <img src="docs/img_readme_etl.png" alt="Arquitetura do pipeline" width="100%"/>
+</p>
+
+---
+
+<>
+
 ## 🎯 O Problema
 
 Empresas que anunciam em múltiplas plataformas de mídia paga (Google Ads, Meta Ads, TikTok Ads) enfrentam um problema estrutural: **cada plataforma entrega dados em schemas completamente diferentes**, com nomenclaturas inconsistentes, granularidades distintas e sem garantia de qualidade.
