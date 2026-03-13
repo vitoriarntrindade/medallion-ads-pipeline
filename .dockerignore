@@ -1,0 +1,40 @@
+# Ambiente virtual local
+.venve1/
+.venv/
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Dados locais (montados como volume em produção)
+storage/
+
+# Testes e CI
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Dagster local
+.dagster/
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Docs
+docs/
+*.md
+
+# Great Expectations local state
+gx/

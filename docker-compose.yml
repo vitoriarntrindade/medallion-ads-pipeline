@@ -1,0 +1,124 @@
+x-postgres-env: &postgres-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ad_analytics
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+
+x-api-env: &api-env
+  GOOGLE_ADS_API_URL: http://mock-apis:8000/google-ads
+  META_ADS_API_URL: http://mock-apis:8000/meta-ads
+  TIKTOK_ADS_API_URL: http://mock-apis:8000/tiktok-ads
+
+x-common-env: &common-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ad_analytics
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  GOOGLE_ADS_API_URL: http://mock-apis:8000/google-ads
+  META_ADS_API_URL: http://mock-apis:8000/meta-ads
+  TIKTOK_ADS_API_URL: http://mock-apis:8000/tiktok-ads
+
+x-base: &base
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    network: host
+  restart: "no"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ad_analytics_postgres
+    environment:
+      POSTGRES_DB: ad_analytics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ad_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mock-apis:
+    <<: *base
+    container_name: ad_analytics_mock_apis
+    command: uvicorn sources.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/app/storage
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import httpx; httpx.get('http://localhost:8000/health').raise_for_status()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pipeline:
+    <<: *base
+    container_name: ad_analytics_pipeline
+    environment:
+      <<: *common-env
+    entrypoint: ["/bin/bash", "docker/entrypoint-pipeline.sh"]
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-apis:
+        condition: service_healthy
+
+  health-check:
+    <<: *base
+    container_name: ad_analytics_health
+    command: uvicorn observability.health_check:app --host 0.0.0.0 --port 8080
+    environment:
+      <<: *postgres-env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dagster-webserver:
+    <<: *base
+    container_name: ad_analytics_dagster_ui
+    command: dagster-webserver -h 0.0.0.0 -p 3000 -f orchestration/definitions.py
+    environment:
+      <<: *common-env
+      DAGSTER_HOME: /app/.dagster
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./storage:/app/storage
+      - dagster_home:/app/.dagster
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dagster-daemon:
+    <<: *base
+    container_name: ad_analytics_dagster_daemon
+    command: dagster-daemon run -f orchestration/definitions.py
+    environment:
+      <<: *common-env
+      DAGSTER_HOME: /app/.dagster
+    volumes:
+      - ./storage:/app/storage
+      - dagster_home:/app/.dagster
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dagster-webserver:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  dagster_home:
